@@ -1,38 +1,53 @@
 #include <iostream>
 #include <string>
-#include "jtensorflow_builder.h"
-#include "JLexer.h"
-#include "JParser.h"
+// #include "parser.h"
+// #include "lexer.h"
 
-using namespace antlr4;
-using namespace tensorflow;
+// Declare the Flex and Bison functions and variables
+// extern int yylex();
+// extern int yyparse();
+extern FILE* yyin;
 
-int main(int argc, char *argv[]) {
-    std::string jExpression = argc > 1 ? argv[1] : "+/ * 1 2 3 4 5";
+// Custom error handling function
+void yyerror(const char* s) {
+    std::cerr << "Parse error: " << s << std::endl;
+}
 
-    ANTLRInputStream input(jExpression);
+int main() {
+    std::string input;
 
-    JLexer lexer(&input);
+    //std::cout << "Enter J code (press Ctrl+D or Ctrl+Z to end):" << std::endl;
 
-    CommonTokenStream tokens(&lexer);
+    // Read input from the user
+    //std::string line;
+    //while (std::getline(std::cin, line)) {
+    //    input += line + "\n";
+    //}
 
-    JParser parser(&tokens);
-    tree::ParseTree *tree = parser.start();
+    input = "1 + 2";
 
-    JTensorflowBuilder builder;
+    // Open the input string as a file stream
+    FILE* inputStream = fmemopen(const_cast<char*>(input.c_str()), input.size(), "r");
+    if (inputStream == nullptr) {
+        std::cerr << "Failed to open input stream." << std::endl;
+        return 1;
+    }
 
-    tree::ParseTreeWalker::DEFAULT.walk(&builder, tree);
+    // Set the input stream for Flex
+    //yyin = inputStream;
 
-    Node* outputNode = builder.GetOutput();
+    // Parse the input
+    //int parseResult = yyparse();
+    int parseResult = 1;
+    
+    // Close the input stream
+    fclose(inputStream);
 
-    Session* session = NewSession(SessionOptions());
-    std::vector<Tensor> outputs;
-    session->Run({}, {outputNode}, {}, &outputs);
-
-    std::cout << "Result: " << outputs[0].scalar<float>() << std::endl;
-
-    session->Close();
-    delete session;
+    if (parseResult == 0) {
+        std::cout << "Parsing successful." << std::endl;
+    } else {
+        std::cerr << "Parsing failed." << std::endl;
+    }
 
     return 0;
 }
